@@ -3,6 +3,8 @@
 
 ORG 0x00
 
+%include "../include/bootdefs.inc"
+
 _bootstart:
 	db 0xEA
 	dw _main, 0x07C0
@@ -33,8 +35,8 @@ _main:
 	xor bx, bx
 	lea si, dap_2nd_stage
 	mov word ds:[si + 2], 0x20
-	mov word ds:[si + 4], 0x0000
-	mov word ds:[si + 6], 0x6000
+	mov word ds:[si + 4], BOOT_2ND_STAGE_OFF
+	mov word ds:[si + 6], BOOT_2ND_STAGE_SEG
 	mov dword ds:[si + 8], 0x1
 	; mov [si + 12], 0x0
 
@@ -42,7 +44,7 @@ _main:
 	int 0x13
 
 	jc _fail
-	jmp 0x6000:0x0000
+	jmp BOOT_2ND_STAGE_SEG:BOOT_2ND_STAGE_OFF
 
 _fail:
 	lea si, err_string
