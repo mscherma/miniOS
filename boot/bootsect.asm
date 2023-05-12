@@ -34,7 +34,7 @@ _main:
 	jc _fail
 	xor bx, bx
 	lea si, dap_2nd_stage
-	mov word ds:[si + 2], 0x20
+	mov word ds:[si + 2], TOTAL_KERN_SIZE
 	mov word ds:[si + 4], BOOT_2ND_STAGE_OFF
 	mov word ds:[si + 6], BOOT_2ND_STAGE_SEG
 	mov dword ds:[si + 8], 0x1

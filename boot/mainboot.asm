@@ -15,7 +15,8 @@ _mainboot:
 	sti
 
 	lea si, _str_2nd_stage
-_loop:
+
+_print_string:
 	mov al, [si]
 	test al, al
 	jz _end_loop
@@ -23,9 +24,10 @@ _loop:
 	mov bl, 0x7
 	int 0x10
 	inc si
-	jmp _loop
+	jmp _print_string
 _end_loop:
 
+	call _get_memory_map_E820
 	cli
 	xor ebx, ebx
 	mov bx, cs
@@ -55,7 +57,27 @@ _ProtectedMode:
 	mov gs, ax
 	mov ss, ax
 	; call _disable_A20_gate
-	jmp $
+
+	cld
+	xor esi, esi
+	xor edi, edi
+	xor ecx, ecx
+	mov ecx, (KERNEL_SIZE / 4)
+	mov edi, KERNEL_ENTRY_OFFSET
+	mov esi, BOOT_2ND_STAGE_SEG
+	shl esi, 4
+	add esi, SIZE_2ND_STAGE
+	rep movsd
+
+	xor eax, eax
+	xor ebx, ebx
+	mov ebx, BOOT_2ND_STAGE_SEG
+	shl ebx, 4
+	mov [ebx + _k_code + 2], ax
+	mov [ebx + _k_code + 4], al
+	mov [ebx + _k_code + 7], al
+	lgdt [ebx + gdtr_area]
+	jmp KCODE_SEG:KERNEL_ENTRY_OFFSET
 
 _disable_A20_gate:
 	in al, 0x92
@@ -95,6 +117,37 @@ dd _gdt
 _str_2nd_stage:
 db 'Entering protected mode...', 0xD, 0xA, 0x0
 
+_memory_map_size:
+db 0
+
+_memory_map_entry_list:
+
+times SIZE_MAX_MEMORY_MAP db 0
+
+[BITS 16]
+_get_memory_map_E820:
+	xor ebx, ebx
+	lea si, _memory_map_size
+	lea di, _memory_map_entry_list
+_mem_enum_loop:
+	xor eax, eax
+	mov eax, 0xE820
+	mov edx, 0x534D4150
+	mov ecx, MEMORY_MAP_ENTRY_SIZE
+	int 0x15
+
+	jc _end_mem_enum_loop
+	test ebx, ebx
+	jz _end_mem_enum_loop
+
+	add di, MEMORY_MAP_ENTRY_SIZE
+	inc byte [si]
+	jmp _mem_enum_loop
+_end_mem_enum_loop:
+	ret
+
+
 times SIZE_2ND_STAGE - ($ - $$) db 0
+
 _stack_top:
 _end_2nd_stage:

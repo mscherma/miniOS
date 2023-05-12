@@ -1,19 +1,18 @@
 AS=nasm
 ASFLAGS=-f bin
 DD=cat
-SOURCES=bootsect.asm \
-	mainboot.asm
+SOURCES=kentry.asm
 OBJECTS=$(SOURCES:.asm=.o)
-EXECUTABLE=boot.bin
+
+TARGET=minikrnl.bin
 
 %.o: %.asm
 	@echo Compiling $< from $(OBJECTS)
 	$(AS) $(ASFLAGS) $< -o $@
 
-$(EXECUTABLE):$(OBJECTS)
-	$(DD) $^ > $@
+$(TARGET): $(OBJECTS)
+	@echo Compiled $(OBJECTS)
 
 .PHONY: clean
 clean:
-	rm *.bin
 	rm *.o
